@@ -15,7 +15,7 @@
 	import { mkid } from '$liwe3/utils/utils';
 	import type { FormField } from '$liwe3/components/FormCreator.svelte';
 	import FormCreator from '$liwe3/components/FormCreator.svelte';
-	import { addToast } from '$liwe3/stores/ToastStore';
+	import { addToast } from '$liwe3/stores/ToastStore.svelte';
 
 	let items: TreeItem[] = [];
 	let selected: string = '';
