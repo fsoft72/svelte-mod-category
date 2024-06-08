@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import CategorySelector from '../components/CategorySelector.svelte';
-	import { userStore } from '$modules/user/store';
+	import { userStore } from '$modules/user/store.svelte';
 	import { has_perm } from '$liwe3/utils/utils';
 	import Button from '$liwe3/components/Button.svelte';
 	import Modal from '$liwe3/components/Modal.svelte';
