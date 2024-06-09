@@ -16,13 +16,7 @@
 	import type { FormField } from '$liwe3/components/FormCreator.svelte';
 	import FormCreator from '$liwe3/components/FormCreator.svelte';
 	import { addToast } from '$liwe3/stores/ToastStore.svelte';
-
-	let items: TreeItem[] = [];
-	let selected: string = '';
-	let item: TreeItem;
-	let values: Record<string, any> = {};
-
-	let tree: SimpleTree;
+	import { categoryStoreList, categoriesLoad } from '../store.svelte';
 
 	const fields: FormField[] = [
 		{
@@ -44,7 +38,7 @@
 			label: 'Slug',
 			type: 'text',
 			required: true,
-			onChange: async (name: string, slug: string, values: Record<string, any>) => {
+			onchange: async (name: string, slug: string, values: Record<string, any>) => {
 				const res = await category_slug_valid(slug, values.id);
 				console.log('=== SLUG: ', name, values);
 				return true;
@@ -72,11 +66,27 @@
 		}
 	];
 
-	const _load_categs = async () => {
-		const categs = await category_admin_list();
+	let items: TreeItem[] = $state<TreeItem[]>([]);
+	let selected: string = $state('');
+	let item: TreeItem | undefined = $derived(tree_find_item(items, selected));
+	let values: Record<string, any> = $derived({
+		id: item?.id,
+		id_parent: item?.info?.id_parent,
+		title: item?.info?.title,
+		description: item?.info?.description,
+		slug: item?.info?.slug,
+		top: item?.info?.top,
+		visible: item?.info?.visible
+	});
+
+	let tree: SimpleTree;
+
+	const _load_categs = async (force = false) => {
+		await categoriesLoad(force);
+
 		const newItems: TreeItem[] = [];
 
-		categs.forEach((categ: Category) => {
+		categoryStoreList.forEach((categ: Category) => {
 			if (!categ.id) return;
 
 			const item: TreeItem = {
@@ -123,7 +133,7 @@
 	};
 
 	const newRoot = () => {
-		item = mk_empty_item();
+		const item = mk_empty_item();
 
 		items = [...items, item];
 
@@ -134,7 +144,7 @@
 		const parent = tree_find_item(items, id_parent);
 		if (!parent) return;
 
-		item = mk_empty_item(id_parent);
+		const item = mk_empty_item(id_parent);
 
 		parent.children?.push(item);
 		parent.isOpen = true;
@@ -148,12 +158,13 @@
 	};
 
 	const deleteItem = async () => {
+		if (!item) return;
 		await category_admin_del(item.id!);
-		await _load_categs();
+		await _load_categs(true);
 	};
 
 	const saveItem = async () => {
-		const data: Category = values;
+		const data: Category = values as Category;
 		let res;
 
 		if (data.id?.startsWith('temp')) {
@@ -188,25 +199,13 @@
 			return;
 		}
 
-		await _load_categs();
+		await _load_categs(true);
 	};
 
 	onMount(async () => {
 		await user_init();
 		await _load_categs();
 	});
-
-	$: item = tree_find_item(items, selected)!;
-
-	$: values = {
-		id: item?.id,
-		id_parent: item?.info?.id_parent,
-		title: item?.info?.title,
-		description: item?.info?.description,
-		slug: item?.info?.slug,
-		top: item?.info?.top,
-		visible: item?.info?.visible
-	};
 </script>
 
 <div class="container">
@@ -216,15 +215,17 @@
 	<div class="actions">
 		<Button on:click={newRoot}>New root</Button>
 		{#if item}
-			<Button disabled={item.level ?? 0 > 1} on:click={() => newItem(item.id)}>New Sub Item</Button>
+			<Button disabled={item.level != 0 ? true : false} onclick={() => newItem(item.id)}>
+				New Sub Item
+			</Button>
 		{/if}
 	</div>
 	{#if item}
 		<div class="details">
-			<FormCreator {fields} {values} showButtons={false} on:change={onChange} />
+			<FormCreator {fields} {values} showButtons={false} onchange={onChange} />
 			<div class="row">
-				<Button mode="danger" on:click={deleteItem}>Delete</Button>
-				<Button mode="success" on:click={saveItem}>
+				<Button mode="danger" onclick={deleteItem}>Delete</Button>
+				<Button mode="success" onclick={saveItem}>
 					{#if item.id.startsWith('temp')}
 						Create
 					{:else}
