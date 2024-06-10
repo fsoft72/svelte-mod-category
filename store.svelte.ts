@@ -9,7 +9,7 @@ const _categoryStoreMap = $derived.by( () => {
 	return res;
 } );
 
-export const categoryGetById = ( id: string ) => _categoryStoreMap[ id ];
+export const categoryGetById = ( id: string ): Category | undefined => _categoryStoreMap[ id ];
 
 export const categoriesLoad = async ( force = false ) => {
 	if ( !force && Object.keys( storeCategory ).length ) return;
