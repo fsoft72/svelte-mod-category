@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { tree_find_item, type TreeItem } from '$liwe3/utils/tree';
+	import { tree_add_item, tree_find_item, type TreeItem } from '$liwe3/utils/tree';
 	import { category_slug_valid } from '../actions';
 	import type { Category } from '../types';
 	import { user_init } from '$modules/user/actions';
 	import type { FormField } from '$liwe3/components/FormCreator.svelte';
 	import FormCreator from '$liwe3/components/FormCreator.svelte';
-	import { categoriesLoad } from '../store.svelte';
+	import { categoriesLoad, categoryAdd, categoryDel, categoryGetById } from '../store.svelte';
 	import DraggableTree from '$liwe3/components/DraggableTree.svelte';
 	import Modal from '$liwe3/components/Modal.svelte';
 	import { mkid } from '$liwe3/utils/utils';
@@ -61,8 +61,8 @@
 
 	let tree: TreeItem[] = $state([]);
 	let showEditItemModal = $state(false);
-	let currCateg: Category | null = null;
-	let currItem: TreeItem | null = null;
+	let currCateg: Category | null = $state(null);
+	let currItem: TreeItem | null = $state(null);
 
 	const _load_categories = async () => {
 		await categoriesLoad(true);
@@ -83,9 +83,11 @@
 		const parentId = parent?.id || '';
 		const label = parentId ? 'New Subcategory' : 'New Category';
 		const idPrefix = parentId ? 'scat' : 'cat';
+		let parentNode: Category | null = parent?.info || null;
+
 		const categ: Category = {
 			id: mkid(idPrefix),
-			id_parent: parent?.id || '',
+			id_parent: parentNode?.id || '',
 			title: label,
 			slug: '',
 			description: '',
@@ -96,13 +98,19 @@
 
 		const newItem: TreeItem = {
 			id: new Date().getTime().toString(),
-			id_parent: parent?.id || '',
+			id_parent: parentId,
 			name: categ.title!,
 			children: [],
 			info: categ
 		};
 
+		categoryAdd(categ);
+
 		return newItem;
+	};
+
+	const ondelitem = (item: TreeItem) => {
+		categoryDel(item.info);
 	};
 
 	const onsubmit = async (values: Record<string, any>) => {
@@ -121,7 +129,7 @@
 </script>
 
 <div class="container">
-	<DraggableTree bind:items={tree} maxDepth={1} {onedititem} {oncreatenewitem} />
+	<DraggableTree bind:items={tree} maxDepth={1} {onedititem} {oncreatenewitem} {ondelitem} />
 </div>
 
 {#if showEditItemModal}
