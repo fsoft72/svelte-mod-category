@@ -21,3 +21,26 @@ export const categoriesLoad = async ( force = false ) => {
 
 	storeCategory.push( ...res );
 };
+
+export const categoryAdd = ( item: Category ) => {
+	storeCategory.push( item );
+};
+
+export const categoryDel = ( categ: Category ) => {
+	// since we cannot recreate the storeCategory array,
+	// we need to create an array with all the indexes we want to delete
+	const idxs: number[] = [];
+
+	storeCategory.map( ( item, idx ) => {
+		if ( item.id_parent === categ.id ) {
+			idxs.push( idx );
+		}
+	} );
+
+	// reverse the array so we can delete the items from the end
+	idxs.reverse().map( idx => storeCategory.splice( idx, 1 ) );
+
+	// delete the category
+	storeCategory.splice( storeCategory.indexOf( categ ), 1 );
+
+};
