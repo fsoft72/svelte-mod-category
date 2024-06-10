@@ -1,22 +1,15 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import SimpleTree from '$liwe3/components/SimpleTree.svelte';
 	import { tree_find_item, type TreeItem } from '$liwe3/utils/tree';
-	import {
-		category_admin_add,
-		category_admin_del,
-		category_admin_list,
-		category_admin_update,
-		category_slug_valid
-	} from '../actions';
+	import { category_slug_valid } from '../actions';
 	import type { Category } from '../types';
 	import { user_init } from '$modules/user/actions';
-	import Button from '$liwe3/components/Button.svelte';
-	import { mkid } from '$liwe3/utils/utils';
 	import type { FormField } from '$liwe3/components/FormCreator.svelte';
 	import FormCreator from '$liwe3/components/FormCreator.svelte';
-	import { addToast } from '$liwe3/stores/ToastStore.svelte';
-	import { storeCategory, categoriesLoad } from '../store.svelte';
+	import { categoriesLoad } from '../store.svelte';
+	import DraggableTree from '$liwe3/components/DraggableTree.svelte';
+	import Modal from '$liwe3/components/Modal.svelte';
+	import { mkid } from '$liwe3/utils/utils';
 
 	const fields: FormField[] = [
 		{
@@ -66,176 +59,80 @@
 		}
 	];
 
-	let items: TreeItem[] = $state<TreeItem[]>([]);
-	let selected: string = $state('');
-	let item: TreeItem | undefined = $derived(tree_find_item(items, selected));
-	let values: Record<string, any> = $derived({
-		id: item?.id,
-		id_parent: item?.info?.id_parent,
-		title: item?.info?.title,
-		description: item?.info?.description,
-		slug: item?.info?.slug,
-		top: item?.info?.top,
-		visible: item?.info?.visible
-	});
+	let tree: TreeItem[] = $state([]);
+	let showEditItemModal = $state(false);
+	let currCateg: Category | null = null;
+	let currItem: TreeItem | null = null;
 
-	let tree: SimpleTree;
-
-	const _load_categs = async (force = false) => {
-		await categoriesLoad(force);
-
-		const newItems: TreeItem[] = [];
-
-		storeCategory.forEach((categ: Category) => {
-			if (!categ.id) return;
-
-			const item: TreeItem = {
-				id: categ.id,
-				id_parent: categ.id_parent,
-				name: categ.title!,
-				info: categ,
-				children: []
-			};
-
-			item.isOpen = tree_find_item(items, item.id)?.isOpen ?? false;
-
-			if (item.id_parent) {
-				const parent = tree_find_item(newItems, item.id_parent);
-				if (parent) parent.children?.push(item);
-			} else {
-				newItems.push(item);
-			}
-		});
-
-		items = newItems;
+	const _load_categories = async () => {
+		await categoriesLoad(true);
 	};
 
-	const onSelect = (e: CustomEvent<{ selected: string[] }>) => {
-		// remove the ":" at the beginning and at the end
-		selected = e.detail.selected[0].slice(1, -1);
-	};
+	const onedititem = (id_item: string) => {
+		const item = tree_find_item(tree, id_item);
+		console.log('=== EDIT ITEM: ', item);
 
-	const mk_empty_item = (id_parent = '') => {
-		return {
-			id: mkid('temp'),
-			name: 'New item',
-			id_parent,
-			info: {
-				title: 'New item',
-				description: '',
-				id_parent,
-				slug: 'new-item',
-				top: false,
-				visible: false
-			},
-			children: []
-		};
-	};
-
-	const newRoot = () => {
-		const item = mk_empty_item();
-
-		items = [...items, item];
-
-		tree.setSelected(item.id);
-	};
-
-	const newItem = (id_parent: string) => {
-		const parent = tree_find_item(items, id_parent);
-		if (!parent) return;
-
-		const item = mk_empty_item(id_parent);
-
-		parent.children?.push(item);
-		parent.isOpen = true;
-
-		items = [...items];
-		tree.setSelected(item.id);
-	};
-
-	const onChange = (e: any) => {
-		values[e.detail.name] = e.detail.value;
-	};
-
-	const deleteItem = async () => {
 		if (!item) return;
-		await category_admin_del(item.id!);
-		await _load_categs(true);
+
+		currCateg = item.info;
+		currItem = item;
+		showEditItemModal = true;
 	};
 
-	const saveItem = async () => {
-		const data: Category = values as Category;
-		let res;
+	const oncreatenewitem = async (parent: TreeItem | undefined): Promise<TreeItem | undefined> => {
+		const parentId = parent?.id || '';
+		const label = parentId ? 'New Subcategory' : 'New Category';
+		const idPrefix = parentId ? 'scat' : 'cat';
+		const categ: Category = {
+			id: mkid(idPrefix),
+			id_parent: parent?.id || '',
+			title: label,
+			slug: '',
+			description: '',
+			top: false,
+			visible: true,
+			image: ''
+		};
 
-		if (data.id?.startsWith('temp')) {
-			res = await category_admin_add(
-				data.title!,
-				data.slug!,
-				data.id_parent,
-				data.description,
-				undefined,
-				data.top,
-				data.visible
-			);
-		} else {
-			res = await category_admin_update(
-				data.id!,
-				data.id_parent,
-				data.title!,
-				data.slug!,
-				data.description,
-				undefined,
-				data.top,
-				data.visible
-			);
-		}
+		const newItem: TreeItem = {
+			id: new Date().getTime().toString(),
+			id_parent: parent?.id || '',
+			name: categ.title!,
+			children: [],
+			info: categ
+		};
 
-		if (res.error) {
-			addToast({
-				type: 'error',
-				message: res.error.message
-			});
+		return newItem;
+	};
 
-			return;
-		}
+	const onsubmit = async (values: Record<string, any>) => {
+		if (!currItem) return;
 
-		await _load_categs(true);
+		Object.assign(currItem.info, values);
+		currItem.name = values.title;
+
+		showEditItemModal = false;
 	};
 
 	onMount(async () => {
 		await user_init();
-		await _load_categs();
+		await _load_categories();
 	});
 </script>
 
 <div class="container">
-	{#key items}
-		<SimpleTree bind:this={tree} multipleSelection={false} {items} on:select={onSelect} />
-	{/key}
-	<div class="actions">
-		<Button onclick={newRoot}>New root</Button>
-		{#if item}
-			<Button disabled={item.level != 0 ? true : false} onclick={() => newItem(item.id)}>
-				New Sub Item
-			</Button>
-		{/if}
-	</div>
-	{#if item}
-		<div class="details">
-			<FormCreator {fields} {values} showButtons={false} onchange={onChange} />
-			<div class="row">
-				<Button mode="danger" onclick={deleteItem}>Delete</Button>
-				<Button mode="success" onclick={saveItem}>
-					{#if item.id.startsWith('temp')}
-						Create
-					{:else}
-						Update
-					{/if}
-				</Button>
-			</div>
-		</div>
-	{/if}
+	<DraggableTree bind:items={tree} maxDepth={1} {onedititem} {oncreatenewitem} />
 </div>
+
+{#if showEditItemModal}
+	<Modal
+		title="Edit Category"
+		onclose={() => (showEditItemModal = false)}
+		oncancel={() => (showEditItemModal = false)}
+	>
+		<FormCreator {fields} values={{ ...currCateg }} {onsubmit} />
+	</Modal>
+{/if}
 
 <style>
 	.container {
@@ -246,21 +143,5 @@
 		background-color: var(--liwe-paper-color);
 
 		padding: 1em;
-	}
-
-	.actions {
-		margin-top: 1em;
-		border-top: var(--liwe-border-color);
-	}
-
-	.details {
-		margin-top: 1em;
-	}
-
-	.row {
-		display: flex;
-		flex-direction: row;
-		justify-content: space-between;
-		align-items: center;
 	}
 </style>
