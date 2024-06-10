@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import CategorySelector from '../components/CategorySelector.svelte';
-	import { userStore } from '$modules/user/store.svelte';
+	import { storeUser } from '$modules/user/store.svelte';
 	import { has_perm } from '$liwe3/utils/utils';
 	import Button from '$liwe3/components/Button.svelte';
 	import Modal from '$liwe3/components/Modal.svelte';
@@ -29,7 +29,7 @@
 	{#key count}
 		<CategorySelector {value} on:change={onChange} />
 	{/key}
-	{#if has_perm($userStore, 'category.editor')}
+	{#if has_perm($storeUser, 'category.editor')}
 		<Button size="xs" variant="outline" mode="success" on:click={openEditCategs}>Edit</Button>
 	{/if}
 </div>

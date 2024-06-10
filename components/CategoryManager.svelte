@@ -16,7 +16,7 @@
 	import type { FormField } from '$liwe3/components/FormCreator.svelte';
 	import FormCreator from '$liwe3/components/FormCreator.svelte';
 	import { addToast } from '$liwe3/stores/ToastStore.svelte';
-	import { categoryStoreList, categoriesLoad } from '../store.svelte';
+	import { storeCategory, categoriesLoad } from '../store.svelte';
 
 	const fields: FormField[] = [
 		{
@@ -86,7 +86,7 @@
 
 		const newItems: TreeItem[] = [];
 
-		categoryStoreList.forEach((categ: Category) => {
+		storeCategory.forEach((categ: Category) => {
 			if (!categ.id) return;
 
 			const item: TreeItem = {
@@ -213,7 +213,7 @@
 		<SimpleTree bind:this={tree} multipleSelection={false} {items} on:select={onSelect} />
 	{/key}
 	<div class="actions">
-		<Button on:click={newRoot}>New root</Button>
+		<Button onclick={newRoot}>New root</Button>
 		{#if item}
 			<Button disabled={item.level != 0 ? true : false} onclick={() => newItem(item.id)}>
 				New Sub Item
