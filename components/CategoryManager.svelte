@@ -68,12 +68,7 @@
 		await categoriesLoad(true);
 	};
 
-	const onedititem = (id_item: string) => {
-		const item = tree_find_item(tree, id_item);
-		console.log('=== EDIT ITEM: ', item);
-
-		if (!item) return;
-
+	const onedititem = (item: TreeItem) => {
 		currCateg = item.info;
 		currItem = item;
 		showEditItemModal = true;
