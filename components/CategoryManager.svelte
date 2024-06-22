@@ -1,12 +1,17 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { tree_add_item, tree_find_item, type TreeItem } from '$liwe3/utils/tree';
+	import {
+		tree_add_item,
+		tree_convert_list,
+		tree_find_item,
+		type TreeItem
+	} from '$liwe3/utils/tree';
 	import { category_slug_valid } from '../actions';
 	import type { Category } from '../types';
 	import { user_init } from '$modules/user/actions';
 	import type { FormField } from '$liwe3/components/FormCreator.svelte';
 	import FormCreator from '$liwe3/components/FormCreator.svelte';
-	import { categoriesLoad, categoryAdd, categoryDel, categoryGetById } from '../store.svelte';
+	import { categoriesLoad, categoryAdd, categoryDel, storeCategory } from '../store.svelte';
 	import DraggableTree from '$liwe3/components/DraggableTree.svelte';
 	import Modal from '$liwe3/components/Modal.svelte';
 	import { mkid } from '$liwe3/utils/utils';
@@ -66,6 +71,8 @@
 
 	const _load_categories = async () => {
 		await categoriesLoad(true);
+
+		tree = tree_convert_list(storeCategory);
 	};
 
 	const onedititem = (item: TreeItem) => {
