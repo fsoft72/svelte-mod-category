@@ -1,12 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import {
-		tree_add_item,
-		tree_convert_list,
-		tree_find_item,
-		type Tree,
-		type TreeItem
-	} from '$liwe3/utils/tree';
+	import { tree_convert_list, type Tree, type TreeItem } from '$liwe3/utils/tree';
 	import { category_slug_valid } from '../actions';
 	import type { Category } from '../types';
 	import { user_init } from '$modules/user/actions';
@@ -16,6 +10,7 @@
 	import DraggableTree from '$liwe3/components/DraggableTree.svelte';
 	import Modal from '$liwe3/components/Modal.svelte';
 	import { mkid } from '$liwe3/utils/utils';
+	import Spinner from '$liwe3/components/Spinner.svelte';
 
 	const fields: FormField[] = [
 		{
@@ -74,8 +69,6 @@
 		await storeCategory.load();
 
 		tree = tree_convert_list(storeCategory.categories);
-
-		console.log('=== TREE: ', tree);
 	};
 
 	const onedititem = (item: TreeItem) => {
@@ -127,14 +120,21 @@
 		showEditItemModal = false;
 	};
 
+	let isReady = $state(false);
+
 	onMount(async () => {
 		await user_init();
 		await _load_categories();
+		isReady = true;
 	});
 </script>
 
 <div class="container">
-	<DraggableTree {tree} maxDepth={1} {onedititem} {oncreatenewitem} {ondelitem} />
+	{#if isReady}
+		<DraggableTree {tree} maxDepth={1} {onedititem} {oncreatenewitem} {ondelitem} />
+	{:else}
+		<Spinner />
+	{/if}
 </div>
 
 {#if showEditItemModal}
