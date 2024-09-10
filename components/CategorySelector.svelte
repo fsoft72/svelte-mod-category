@@ -1,19 +1,15 @@
 <script lang="ts">
 	import SelectTree from '$liwe3/components/SelectTree.svelte';
-	import { tree_convert_list, type TreeItem } from '$liwe3/utils/tree';
-	import { onMount } from 'svelte';
-	import { category_list } from '../actions';
+	import { type Tree, type TreeItem } from '$liwe3/utils/tree';
 
-	export let categories: TreeItem[] = [];
-	export let value: string = '';
+	interface Props {
+		value?: string;
+		categories?: TreeItem[];
 
-	onMount(async () => {
-		// we use category_list and not admin_list because also the trainers and users
-		// can create courses and they need to see the categories
-		const res: any = await category_list();
-		if (res.error) return;
-		categories = tree_convert_list(res);
-	});
+		onchange: (value: string) => void;
+	}
+
+	let { value = '', categories = [], onchange }: Props = $props();
 </script>
 
-<SelectTree tree={categories} {value} on:change />
+<SelectTree tree={categories} {value} {onchange} />

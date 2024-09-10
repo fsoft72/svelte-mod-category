@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
 	import CategorySelector from '../components/CategorySelector.svelte';
 	import { storeUser } from '$modules/user/store.svelte';
 	import { has_perm } from '$liwe3/utils/utils';
@@ -7,17 +6,19 @@
 	import Modal from '$liwe3/components/Modal.svelte';
 	import CategoryManager from '../components/CategoryManager.svelte';
 
-	export let value: string = '';
+	interface Props {
+		value?: string;
 
-	let showEditCategs = false;
-	let count = 0;
+		onchange?: (value: string) => void;
+	}
 
-	const dispatch = createEventDispatcher();
+	let { value = '', onchange }: Props = $props();
 
-	const onChange = (e: CustomEvent) => {
-		value = e.detail.id;
+	let showEditCategs = $state(false);
+	let count = $state(0);
 
-		dispatch('change', value);
+	const onChange = (id: string) => {
+		onchange?.(id);
 	};
 
 	const openEditCategs = () => {
@@ -27,16 +28,21 @@
 
 <div class="container">
 	{#key count}
-		<CategorySelector {value} on:change={onChange} />
+		<CategorySelector {value} onchange={onChange} />
 	{/key}
-	{#if has_perm($storeUser, 'category.editor')}
-		<Button size="xs" variant="outline" mode="success" on:click={openEditCategs}>Edit</Button>
+	{#if has_perm(storeUser, 'category.editor')}
+		<Button size="xs" variant="outline" mode="success" onclick={openEditCategs}>Edit</Button>
 	{/if}
 </div>
 
 {#if showEditCategs}
 	<Modal
-		on:cancel={() => {
+		title="Edit Categories"
+		oncancel={() => {
+			showEditCategs = false;
+			count++;
+		}}
+		onclose={() => {
 			showEditCategs = false;
 			count++;
 		}}

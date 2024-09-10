@@ -4,6 +4,7 @@
 		tree_add_item,
 		tree_convert_list,
 		tree_find_item,
+		type Tree,
 		type TreeItem
 	} from '$liwe3/utils/tree';
 	import { category_slug_valid } from '../actions';
@@ -11,7 +12,7 @@
 	import { user_init } from '$modules/user/actions';
 	import type { FormField } from '$liwe3/components/FormCreator.svelte';
 	import FormCreator from '$liwe3/components/FormCreator.svelte';
-	import { categoriesLoad, categoryAdd, categoryDel, storeCategory } from '../store.svelte';
+	import { storeCategory } from '../store.svelte';
 	import DraggableTree from '$liwe3/components/DraggableTree.svelte';
 	import Modal from '$liwe3/components/Modal.svelte';
 	import { mkid } from '$liwe3/utils/utils';
@@ -64,15 +65,17 @@
 		}
 	];
 
-	let tree: TreeItem[] = $state([]);
+	let tree: Tree = $state({ children: [] });
 	let showEditItemModal = $state(false);
 	let currCateg: Category | null = $state(null);
 	let currItem: TreeItem | null = $state(null);
 
 	const _load_categories = async () => {
-		await categoriesLoad(true);
+		await storeCategory.load();
 
-		tree = tree_convert_list(storeCategory);
+		tree = tree_convert_list(storeCategory.categories);
+
+		console.log('=== TREE: ', tree);
 	};
 
 	const onedititem = (item: TreeItem) => {
@@ -106,13 +109,13 @@
 			info: categ
 		};
 
-		categoryAdd(categ);
+		storeCategory.add(categ);
 
 		return newItem;
 	};
 
 	const ondelitem = (item: TreeItem) => {
-		categoryDel(item.info);
+		storeCategory.del(item.info.id);
 	};
 
 	const onsubmit = async (values: Record<string, any>) => {
@@ -131,7 +134,7 @@
 </script>
 
 <div class="container">
-	<DraggableTree bind:items={tree} maxDepth={1} {onedititem} {oncreatenewitem} {ondelitem} />
+	<DraggableTree {tree} maxDepth={1} {onedititem} {oncreatenewitem} {ondelitem} />
 </div>
 
 {#if showEditItemModal}
