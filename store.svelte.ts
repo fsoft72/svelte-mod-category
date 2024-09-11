@@ -1,3 +1,4 @@
+import { tree_convert_list, type Tree } from '$liwe3/utils/tree';
 import { category_admin_list } from './actions';
 import type { Category } from './types';
 
@@ -9,6 +10,8 @@ interface CategoryStore {
 	load ( force?: boolean ): Promise<void>;
 	add ( item: Category ): void;
 	del ( item: Category ): void;
+
+	tree (): Tree;
 }
 
 export const storeCategory: CategoryStore = $state( {
@@ -39,5 +42,9 @@ export const storeCategory: CategoryStore = $state( {
 	del ( item: Category ) {
 		storeCategory.categories.splice( storeCategory.categories.indexOf( item ), 1 );
 		delete storeCategory.categoriesMap[ item.id ];
+	},
+
+	tree () {
+		return tree_convert_list( storeCategory.categories );
 	}
 } );
