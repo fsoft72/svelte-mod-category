@@ -7,18 +7,19 @@
 	import CategoryManager from '../components/CategoryManager.svelte';
 
 	interface Props {
+		name: string;
 		value?: string;
 
-		onchange?: (value: string) => void;
+		onchange?: (name: string, value: string) => void;
 	}
 
-	let { value = '', onchange }: Props = $props();
+	let { name, value = '', onchange }: Props = $props();
 
 	let showEditCategs = $state(false);
 	let count = $state(0);
 
 	const onChange = (id: string) => {
-		onchange?.(id);
+		onchange?.(name, id);
 	};
 
 	const openEditCategs = () => {
