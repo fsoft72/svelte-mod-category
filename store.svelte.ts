@@ -12,6 +12,7 @@ interface CategoryStore {
 	del ( item: Category ): void;
 
 	tree (): Tree;
+	list (): { label: string, value: string; }[];
 }
 
 export const storeCategory: CategoryStore = $state( {
@@ -46,5 +47,13 @@ export const storeCategory: CategoryStore = $state( {
 
 	tree () {
 		return tree_convert_list( storeCategory.categories );
+	},
+
+	// Return a label / value list of all categories
+	list () {
+		return storeCategory.categories.map( ( cat ) => ( {
+			label: cat.title ?? '',
+			value: cat.id,
+		} ) );
 	}
 } );
