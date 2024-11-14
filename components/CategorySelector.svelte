@@ -1,15 +1,38 @@
 <script lang="ts">
 	import SelectTree from '$liwe3/components/SelectTree.svelte';
-	import { type Tree } from '$liwe3/utils/tree';
+	import type { FormField } from '$liwe3/components/FormCreator.svelte';
 	import { storeCategory } from '../store.svelte';
+	import { onMount } from 'svelte';
 
 	interface Props {
+		field: FormField;
+
+		name: string;
+
 		value?: string;
 
-		onchange: (value: string) => void;
+		// dependency injection
+		_v: (field: FormField) => any;
+
+		// events
+		onchange: (name: string, value: any, field: FormField) => void;
 	}
 
-	let { value = '', onchange }: Props = $props();
-</script>
+	let { field, name, value = '', onchange, _v }: Props = $props();
+	let isReady = $state(false);
 
-<SelectTree tree={storeCategory.tree()} {value} {onchange} />
+	const onSelect = (value: string) => {
+		onchange(name, value, field);
+	};
+
+	onMount( async () => {
+		await storeCategory.load();
+		isReady = true;
+	});
+
+</script>
+{#if (isReady)}
+	<SelectTree tree={storeCategory.tree()} {value} onchange={onSelect} />
+{:else}
+	<div>Loading...</div>
+{/if}

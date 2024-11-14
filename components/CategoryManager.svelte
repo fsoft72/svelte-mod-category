@@ -113,7 +113,7 @@
 
 	const onsubmit = async (values: Record<string, any>) => {
 		if (!currItem) return;
-
+		if(!currItem.info) currItem.info = {} as Category;
 		Object.assign(currItem.info, values);
 		currItem.name = values.title;
 
