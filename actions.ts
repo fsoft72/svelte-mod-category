@@ -7,7 +7,7 @@
 
 /*=== f2c_end __file ===*/
 
-import { get, patch, post, delete_ } from '$liwe3/utils/fetcher';
+import { get, patch, post, delete_, type LiWEFetcherOptions } from '$liwe3/utils/fetcher';
 
 /**
  * The call creates a category inside the system.
@@ -25,7 +25,7 @@ import { get, patch, post, delete_ } from '$liwe3/utils/fetcher';
  * @return category: Category
  *
  */
-export const category_admin_add = async ( title: string, slug: string, id_parent?: string, description?: string, modules?: string[], top?: boolean, visible: boolean = true, image?: string ) => {
+export const category_admin_add = async ( title: string, slug: string, id_parent?: string, description?: string, modules?: string[], top?: boolean, visible: boolean = true, image?: string, _options?: LiWEFetcherOptions ) => {
 	const res = await post( `/api/category/admin/add`, { 
 		description,
 		id_parent,
@@ -35,7 +35,7 @@ export const category_admin_add = async ( title: string, slug: string, id_parent
 		title,
 		top,
 		visible
-	 }, true );
+	 }, _options?.skipError ? _options.skipError : false );
 
 	if (res.error) return res;
 
@@ -63,7 +63,7 @@ export const category_admin_add = async ( title: string, slug: string, id_parent
  * @return category: Category
  *
  */
-export const category_admin_update = async ( id: string, id_parent?: string, title?: string, slug?: string, description?: string, modules?: string[], top?: boolean, visible?: boolean, image?: string ) => {
+export const category_admin_update = async ( id: string, id_parent?: string, title?: string, slug?: string, description?: string, modules?: string[], top?: boolean, visible?: boolean, image?: string, _options?: LiWEFetcherOptions ) => {
 	const res = await patch( `/api/category/admin/update`, { 
 		description,
 		id,
@@ -74,7 +74,7 @@ export const category_admin_update = async ( id: string, id_parent?: string, tit
 		title,
 		top,
 		visible
-	 }, true );
+	 }, _options?.skipError ? _options.skipError : false );
 
 	if (res.error) return res;
 
@@ -95,8 +95,8 @@ export const category_admin_update = async ( id: string, id_parent?: string, tit
  * @return category: Category
  *
  */
-export const category_admin_fields = async ( id: string, data: any ) => {
-	const res = await patch( `/api/category/admin/fields`, { id, data }, true );
+export const category_admin_fields = async ( id: string, data: any, _options?: LiWEFetcherOptions ) => {
+	const res = await patch( `/api/category/admin/fields`, { id, data }, _options?.skipError ? _options.skipError : false );
 
 	if (res.error) return res;
 
@@ -116,8 +116,8 @@ export const category_admin_fields = async ( id: string, data: any ) => {
  * @return categories: Category
  *
  */
-export const category_admin_list = async ( parent_only?: boolean ) => {
-	const res = await get( `/api/category/admin/list`, { parent_only }, true );
+export const category_admin_list = async ( parent_only?: boolean, _options?: LiWEFetcherOptions ) => {
+	const res = await get( `/api/category/admin/list`, { parent_only }, _options?.skipError ? _options.skipError : false );
 
 	if (res.error) return res;
 
@@ -136,8 +136,8 @@ export const category_admin_list = async ( parent_only?: boolean ) => {
  * @return id: str
  *
  */
-export const category_admin_del = async ( id: string ) => {
-	const res = await delete_( `/api/category/admin/del`, { id }, true );
+export const category_admin_del = async ( id: string, _options?: LiWEFetcherOptions ) => {
+	const res = await delete_( `/api/category/admin/del`, { id }, _options?.skipError ? _options.skipError : false );
 
 	if (res.error) return res;
 
@@ -158,8 +158,8 @@ export const category_admin_del = async ( id: string ) => {
  * @return category: Category
  *
  */
-export const category_admin_module_add = async ( id: string, module: string ) => {
-	const res = await post( `/api/category/admin/module/add`, { id, module }, true );
+export const category_admin_module_add = async ( id: string, module: string, _options?: LiWEFetcherOptions ) => {
+	const res = await post( `/api/category/admin/module/add`, { id, module }, _options?.skipError ? _options.skipError : false );
 
 	if (res.error) return res;
 
@@ -180,8 +180,8 @@ export const category_admin_module_add = async ( id: string, module: string ) =>
  * @return category: Category
  *
  */
-export const category_admin_module_del = async ( id: string, module: string ) => {
-	const res = await delete_( `/api/category/admin/module/del`, { id, module }, true );
+export const category_admin_module_del = async ( id: string, module: string, _options?: LiWEFetcherOptions ) => {
+	const res = await delete_( `/api/category/admin/module/del`, { id, module }, _options?.skipError ? _options.skipError : false );
 
 	if (res.error) return res;
 
@@ -201,8 +201,8 @@ export const category_admin_module_del = async ( id: string, module: string ) =>
  * @return tree: CategoryTreeItem
  *
  */
-export const category_list = async ( id_category?: string, module?: string ) => {
-	const res = await get( `/api/category/list`, { id_category, module }, false );
+export const category_list = async ( id_category?: string, module?: string, _options?: LiWEFetcherOptions ) => {
+	const res = await get( `/api/category/list`, { id_category, module }, _options?.skipError ? _options.skipError : false );
 
 	if (res.error) return res;
 
@@ -222,8 +222,8 @@ export const category_list = async ( id_category?: string, module?: string ) => 
  * @return categs: CategorySmallItem
  *
  */
-export const category_top_list = async ( module?: string, limit?: number ) => {
-	const res = await get( `/api/category/top/list`, { module, limit }, false );
+export const category_top_list = async ( module?: string, limit?: number, _options?: LiWEFetcherOptions ) => {
+	const res = await get( `/api/category/top/list`, { module, limit }, _options?.skipError ? _options.skipError : false );
 
 	if (res.error) return res;
 
@@ -241,8 +241,8 @@ export const category_top_list = async ( module?: string, limit?: number ) => {
  * @return ok: boolean
  *
  */
-export const category_slug_valid = async ( slug: string, id?: string ) => {
-	const res = await post( `/api/category/slug/valid`, { slug, id }, true );
+export const category_slug_valid = async ( slug: string, id?: string, _options?: LiWEFetcherOptions ) => {
+	const res = await post( `/api/category/slug/valid`, { slug, id }, _options?.skipError ? _options.skipError : false );
 
 	if (res.error) return res;
 

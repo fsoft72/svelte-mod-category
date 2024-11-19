@@ -1,66 +1,114 @@
-import { tree_convert_list, type Tree } from '$liwe3/utils/tree';
-import { category_admin_add, category_admin_del, category_admin_list, category_admin_update } from './actions';
-import type { Category } from './types';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { runeDebug } from '$liwe3/utils/runes.svelte';
+import { category_admin_add, category_admin_del, category_admin_update, category_list } from './actions';
+import type { Category, CategoryTreeItem } from './types';
 
 interface CategoryStore {
-	categories: Category[];
-	categoriesMap: Record<string, Category>;
+	categories: CategoryTreeItem[];
+	categoriesMap: Record<string, CategoryTreeItem>;
 
-	get ( id: string ): Category | undefined;
-	load ( force?: boolean ): Promise<void>;
-	add ( item: Category, skip_save?: boolean ): Promise<void>;
+	get ( id: string ): CategoryTreeItem | undefined;
+	load ( force?: boolean ): Promise<any>;
+	add ( item: CategoryTreeItem, skip_save?: boolean ): Promise<void>;
 	del ( item: Category, skip_save?: boolean ): Promise<void>;
 	update ( item: Category ): Promise<void>;
 
-	tree (): Tree;
 	list (): { label: string, value: string; }[];
+	all (): CategoryTreeItem[];
+
+	_sort_parent ( item: CategoryTreeItem, skip_save?: boolean ): void;
 }
 
 export const storeCategory: CategoryStore = $state( {
 	categories: [],
 	categoriesMap: {},
 
-	get ( id: string ): Category | undefined {
+	get ( id: string ): CategoryTreeItem | undefined {
 		return storeCategory.categoriesMap[ id ];
 	},
 
 	async load ( force = false ) {
-		if ( !force && storeCategory.categories.length ) return;
+		if ( !force && storeCategory.categories.length ) return {};
 
 		storeCategory.categories.length = 0;
 		storeCategory.categoriesMap = {};
 
-		const res = await category_admin_list();
-		if ( res.error ) return;
+		const res = await category_list();
+		if ( res.error ) return res;
 
-		res.map( ( cat: Category ) => storeCategory.add( cat, true ) );
+		console.log( "=== RES: ", res );
+
+		res.map( ( cat: CategoryTreeItem ) => {
+			storeCategory.categories.push( cat );
+			storeCategory.categoriesMap[ cat.id ] = cat;
+
+			if ( cat.children ) {
+				cat.children.map( ( child: CategoryTreeItem ) => {
+					storeCategory.categoriesMap[ child.id ] = child;
+				} );
+			}
+		} );
+
+		return {};
 	},
 
-	async add ( item: Category, skip_save = false ) {
+	_sort_parent ( item: CategoryTreeItem, skip_save = false ) {
+		const parent = storeCategory.categoriesMap[ item.id_parent ];
+		if ( parent ) {
+			if ( !parent.children ) parent.children = [];
+			if ( !parent.children.includes( item ) ) parent.children.push( item );
+			if ( !skip_save ) storeCategory.update( parent as any );
+
+			// Sort children by title
+			parent.children.sort( ( a, b ) => a.title.localeCompare( b.title ) );
+
+			// replace category in main list
+			const pos = storeCategory.categories.findIndex( ( cat ) => cat.id === parent.id );
+			if ( pos != -1 ) storeCategory.categories.splice( pos, 1 );
+			storeCategory.categories.splice( pos, 0, parent );
+
+			storeCategory.categoriesMap[ item.id ] = item;
+		}
+	},
+
+	async add ( item: CategoryTreeItem, skip_save = false ) {
 		if ( !skip_save ) {
-			const res = await category_admin_add( item.title ?? '', item.slug ?? '', item.id_parent, item.description, item.modules, item.top, item.visible, item.image );
+			const res = await category_admin_add( item.title, item.slug, item.id_parent, item.description, item.modules, item.top, item.visible, item.image );
 			if ( res.error ) return;
 		}
-		storeCategory.categories.push( item );
+
+		if ( item.id_parent ) {
+			storeCategory._sort_parent( item, true );
+		} else {
+			storeCategory.categories.push( item );
+
+			// Sort categories by title
+			storeCategory.categories.sort( ( a, b ) => a.title.localeCompare( b.title ) );
+		}
 		storeCategory.categoriesMap[ item.id ] = item;
+
+		console.log( "=== ADD: ", item );
 	},
 
 	async update ( item: Category ) {
 		const res = await category_admin_update( item.id, item.id_parent, item.title, item.slug, item.description, item.modules, item.top, item.visible, item.image );
 		if ( res.error ) return;
 
+		if ( item.id_parent ) {
+			storeCategory._sort_parent( item as any, true );
+		}
+
 		storeCategory.del( item, true );
-		storeCategory.add( item, true );
+		storeCategory.add( item as any, true );
 	},
 
 	async del ( item: Category, skip_save = false ) {
 		if ( !skip_save ) category_admin_del( item.id );
-		storeCategory.categories.splice( storeCategory.categories.indexOf( item ), 1 );
-		delete storeCategory.categoriesMap[ item.id ];
-	},
-
-	tree () {
-		return tree_convert_list( storeCategory.categories );
+		const pos = storeCategory.categories.findIndex( ( cat ) => cat.id === item.id );
+		if ( pos != -1 ) {
+			storeCategory.categories.splice( pos, 1 );
+			delete storeCategory.categoriesMap[ item.id ];
+		}
 	},
 
 	// Return a label / value list of all categories
@@ -69,5 +117,9 @@ export const storeCategory: CategoryStore = $state( {
 			label: cat.title ?? '',
 			value: cat.id,
 		} ) );
+	},
+
+	all () {
+		return storeCategory.categories;
 	}
 } );
