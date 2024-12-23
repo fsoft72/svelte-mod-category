@@ -10,6 +10,7 @@
 	import type { CategoryTreeItem } from '../types';
 	import Modal from '$liwe3/components/Modal.svelte';
 	import SubCategoryManager from './subs/SubCategoryManager.svelte';
+	import { runeDebug } from '$liwe3/utils/runes.svelte';
 
 	const fields: DataGridField[] = [
 		{
@@ -92,14 +93,34 @@
 	let openSubcategories = $state(false);
 
 	const manageSubcategories = (row: DataGridRow) => {
-		console.log('=== MANAGE SUB: ', row);
-
 		currCategory = storeCategory.categories.find((category) => category.id == row.id)!;
 		openSubcategories = true;
 	};
 
 	const onsave_subcategories = (subcategories: CategoryTreeItem[]) => {
-		currCategory!.children = subcategories;
+		// compare subcategories with currCategory.children
+		// create a list of subcategories to add (elements in subcategories but not in currCategory.children)
+		// create a list of subcategories to remove (elements in currCategory.children but not in subcategories)
+		// create a list of subcategories to update (elements in both subcategories and currCategory.children with different values)
+
+		const toAdd = subcategories.filter(
+			(subcategory) => !currCategory?.children.find((child) => child.id == subcategory.id)
+		);
+		const toRemove = currCategory?.children.filter(
+			(child) => !subcategories.find((subcategory) => subcategory.id == child.id)
+		);
+		const toUpdate = subcategories.filter((subcategory) => {
+			const currSubcategory = currCategory?.children.find((child) => child.id == subcategory.id);
+
+			runeDebug('=== UPDATE: ', { currSubcategory, subcategory });
+
+			return currSubcategory && JSON.stringify(currSubcategory) !== JSON.stringify(subcategory);
+		});
+
+		console.log('=== TO ADD: ', toAdd);
+		console.log('=== TO REMOVE: ', toRemove);
+		console.log('=== TO UPDATE: ', toUpdate);
+
 		openSubcategories = false;
 
 		storeCategory.update(currCategory!);

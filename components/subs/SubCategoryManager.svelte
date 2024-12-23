@@ -5,6 +5,8 @@
 		type DataGridField,
 		type DataGridRow
 	} from '$liwe3/components/DataGrid.svelte';
+	import { runeDebug } from '$liwe3/utils/runes.svelte';
+	import { clone } from '$liwe3/utils/utils';
 	import { storeCategory } from '$modules/category/store.svelte';
 	import type { CategoryTreeItem } from '$modules/category/types';
 	import { onMount } from 'svelte';
@@ -75,12 +77,13 @@
 	let subcategories: CategoryTreeItem[] = $state([]);
 
 	const oncelledit = (data: DataGridRow, field: string, oldValue: any, newValue: any) => {
+		runeDebug('=== EDIT: ', { field, oldValue, newValue });
 		data[field] = newValue;
 	};
 
 	onMount(() => {
 		category = storeCategory.get(id_category);
-		subcategories = category?.children ?? [];
+		subcategories = clone($state.snapshot(category?.children ?? []));
 
 		isReady = true;
 	});
