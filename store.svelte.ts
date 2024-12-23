@@ -54,21 +54,21 @@ export const storeCategory: CategoryStore = $state( {
 
 	_sort_parent ( item: CategoryTreeItem, skip_save = false ) {
 		const parent = storeCategory.categoriesMap[ item.id_parent ];
-		if ( parent ) {
-			if ( !parent.children ) parent.children = [];
-			if ( !parent.children.includes( item ) ) parent.children.push( item );
-			if ( !skip_save ) storeCategory.update( parent as any );
+		if ( !parent ) return;
 
-			// Sort children by title
-			parent.children.sort( ( a, b ) => a.title.localeCompare( b.title ) );
+		if ( !parent.children ) parent.children = [];
+		if ( !parent.children.includes( item ) ) parent.children.push( item );
+		if ( !skip_save ) storeCategory.update( parent as any );
 
-			// replace category in main list
-			const pos = storeCategory.categories.findIndex( ( cat ) => cat.id === parent.id );
-			if ( pos != -1 ) storeCategory.categories.splice( pos, 1 );
-			storeCategory.categories.splice( pos, 0, parent );
+		// Sort children by title
+		parent.children.sort( ( a, b ) => a.title.localeCompare( b.title ) );
 
-			storeCategory.categoriesMap[ item.id ] = item;
-		}
+		// replace category in main list
+		const pos = storeCategory.categories.findIndex( ( cat ) => cat.id === parent.id );
+		if ( pos != -1 ) storeCategory.categories.splice( pos, 1 );
+		storeCategory.categories.splice( pos, 0, parent );
+
+		storeCategory.categoriesMap[ item.id ] = item;
 	},
 
 	async add ( item: CategoryTreeItem, skip_save = false ) {
@@ -90,7 +90,7 @@ export const storeCategory: CategoryStore = $state( {
 		console.log( "=== ADD: ", item );
 	},
 
-	async update ( item: Category ) {
+	async update ( item: CategoryTreeItem ) {
 		const res = await category_admin_update( item.id, item.id_parent, item.title, item.slug, item.description, item.modules, item.top, item.visible, item.image );
 		if ( res.error ) return;
 
@@ -98,11 +98,11 @@ export const storeCategory: CategoryStore = $state( {
 			storeCategory._sort_parent( item as any, true );
 		}
 
-		storeCategory.del( item, true );
+		storeCategory.del( item as any, true );
 		storeCategory.add( item as any, true );
 	},
 
-	async del ( item: Category, skip_save = false ) {
+	async del ( item: CategoryTreeItem, skip_save = false ) {
 		if ( !skip_save ) category_admin_del( item.id );
 		const pos = storeCategory.categories.findIndex( ( cat ) => cat.id === item.id );
 		if ( pos != -1 ) {
