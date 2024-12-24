@@ -9,6 +9,7 @@
 	import type { CategoryTreeItem } from '../types';
 	import Modal from '$liwe3/components/Modal.svelte';
 	import CategoryAdmin from './CategoryAdmin.svelte';
+	import { runeDebug } from '$liwe3/utils/runes.svelte';
 
 	interface Props {
 		categories?: CategoryTreeItem[];
@@ -82,6 +83,7 @@
 				manageSubcategories(row);
 			},
 			render: (field: CategoryTreeItem[], row: DataGridRow) => {
+				runeDebug('=== ROW: ', row);
 				return field?.length ?? 0;
 			}
 		},
