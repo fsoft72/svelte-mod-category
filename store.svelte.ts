@@ -1,11 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { runeDebug } from '$liwe3/utils/runes.svelte';
-import { category_admin_add, category_admin_del, category_admin_list, category_admin_update, category_list } from './actions';
+import { category_admin_add, category_admin_del, category_admin_list, category_admin_update } from './actions';
 import type { CategoryTreeItem } from './types';
 
 interface CategoryStore {
 	categories: CategoryTreeItem[];
-	categoriesMap: Record<string, CategoryTreeItem>;
 
 	get ( id: string ): CategoryTreeItem | undefined;
 	load ( force?: boolean ): Promise<any>;
@@ -22,24 +20,23 @@ interface CategoryStore {
 
 export const storeCategory: CategoryStore = $state( {
 	categories: [],
-	categoriesMap: {},
 
 	get ( id: string ): CategoryTreeItem | undefined {
-		return storeCategory.categoriesMap[ id ];
+		const res = storeCategory.categories.filter( ( cat ) => cat.id === id );
+		if ( res.length ) return res[ 0 ];
+
+		return undefined;
 	},
 
 	async load ( force = false ) {
 		if ( !force && storeCategory.categories.length ) return {};
 
 		storeCategory.categories.length = 0;
-		storeCategory.categoriesMap = {};
+		// if ( res.error ) return res;
 
-		const res = await category_list();
-		if ( res.error ) return res;
-
+		/*
 		res.map( ( cat: CategoryTreeItem ) => {
 			storeCategory.categories.push( cat );
-			storeCategory.categoriesMap[ cat.id ] = cat;
 
 			if ( cat.children ) {
 				cat.children.map( ( child: CategoryTreeItem ) => {
@@ -47,6 +44,7 @@ export const storeCategory: CategoryStore = $state( {
 				} );
 			}
 		} );
+		*/
 
 		return {};
 	},
@@ -55,23 +53,18 @@ export const storeCategory: CategoryStore = $state( {
 		if ( !force && storeCategory.categories.length ) return {};
 
 		storeCategory.categories.length = 0;
-		storeCategory.categoriesMap = {};
 
 		const res = await category_admin_list();
 		if ( res.error ) return res;
 
 		res.map( ( cat: CategoryTreeItem ) => {
-			if ( !cat.id_parent ) {
-				storeCategory.categories.push( cat );
-			}
-
-			storeCategory.categoriesMap[ cat.id ] = cat;
+			if ( !cat.id_parent ) storeCategory.categories.push( cat );
 		} );
 
 		res.map( ( cat: CategoryTreeItem ) => {
 			if ( !cat.id_parent ) return;
 
-			const parent = storeCategory.categoriesMap[ cat.id_parent ];
+			const parent = storeCategory.categories.filter( ( c ) => c.id === cat.id_parent )[ 0 ];
 			if ( !parent ) return;
 
 			if ( !parent.children ) parent.children = [];
@@ -95,29 +88,19 @@ export const storeCategory: CategoryStore = $state( {
 			// Sort categories by title
 			storeCategory.categories.sort( ( a, b ) => a.title.localeCompare( b.title ) );
 		}
-		storeCategory.categoriesMap[ item.id ] = item;
 	},
 
 	async update ( item: CategoryTreeItem ) {
 		const res = await category_admin_update( item.id, item.id_parent, item.title, item.slug, item.description, item.modules, item.top, item.visible, item.image );
 		if ( res.error ) return;
-
-		/*
-		if ( item.id_parent ) {
-			storeCategory._sort_parent( item as any, true );
-		}
-			*/
-
-		// storeCategory.del( item as any, true );
-		// storeCategory.add( item as any, true );
 	},
 
 	async fieldUpdate ( id_item: string, field: string, value: any ) {
-		const item: Record<string, any> = storeCategory.categoriesMap[ id_item ];
+		const item: CategoryTreeItem | undefined = storeCategory.get( id_item );
 		if ( !item ) return;
 
-		item[ field ] = value;
-		await storeCategory.update( item as any );
+		( item as any )[ field ] = value;
+		await storeCategory.update( item );
 	},
 
 	async del ( item: CategoryTreeItem, skip_save = false ) {
@@ -125,7 +108,6 @@ export const storeCategory: CategoryStore = $state( {
 		const pos = storeCategory.categories.findIndex( ( cat ) => cat.id === item.id );
 		if ( pos != -1 ) {
 			storeCategory.categories.splice( pos, 1 );
-			delete storeCategory.categoriesMap[ item.id ];
 		}
 	},
 
@@ -148,7 +130,7 @@ export const storeCategory: CategoryStore = $state( {
 		if ( !id_parent )
 			items = storeCategory.categories.filter( ( cat ) => !cat.id_parent );
 		else {
-			const parent = storeCategory.categoriesMap[ id_parent ];
+			const parent = storeCategory.get( id_parent );
 
 			if ( !parent || !parent.children ) return [];
 
