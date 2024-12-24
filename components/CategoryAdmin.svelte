@@ -4,13 +4,17 @@
 		type DataGridField,
 		type DataGridRow
 	} from '$liwe3/components/DataGrid.svelte';
-	import { onMount } from 'svelte';
 	import { Plus } from 'svelte-hero-icons';
 	import { storeCategory } from '../store.svelte';
 	import type { CategoryTreeItem } from '../types';
 	import Modal from '$liwe3/components/Modal.svelte';
-	import SubCategoryManager from './subs/SubCategoryManager.svelte';
-	import { runeDebug } from '$liwe3/utils/runes.svelte';
+	import CategoryAdmin from './CategoryAdmin.svelte';
+
+	interface Props {
+		categories?: CategoryTreeItem[];
+	}
+
+	let { categories }: Props = $props();
 
 	const fields: DataGridField[] = [
 		{
@@ -53,6 +57,23 @@
 			editable: true
 		},
 		{
+			name: 'top',
+			label: 'Top',
+			type: 'checkbox',
+			align: 'center',
+			filterable: true,
+			sortable: true,
+			editable: true
+		},
+		{
+			name: 'image',
+			label: 'Image',
+			type: 'text',
+			filterable: true,
+			sortable: true,
+			editable: true
+		},
+		{
 			name: 'children',
 			label: 'Subcategories',
 			type: 'number',
@@ -87,70 +108,24 @@
 		}
 	];
 
-	const data: DataGridRow[] = [];
-	let isReady = $state(false);
-	let currCategory: CategoryTreeItem | null = $state(null);
+	const data: DataGridRow[] = $state(categories ? categories : []);
+	let currCategory: string = $state('');
 	let openSubcategories = $state(false);
 
 	const manageSubcategories = (row: DataGridRow) => {
-		currCategory = storeCategory.categories.find((category) => category.id == row.id)!;
+		currCategory = row.id;
 		openSubcategories = true;
 	};
 
-	const onsave_subcategories = (subcategories: CategoryTreeItem[]) => {
-		// compare subcategories with currCategory.children
-		// create a list of subcategories to add (elements in subcategories but not in currCategory.children)
-		// create a list of subcategories to remove (elements in currCategory.children but not in subcategories)
-		// create a list of subcategories to update (elements in both subcategories and currCategory.children with different values)
+	const oncelledit = (row: DataGridRow, field: string, oldValue: any, newValue: any) => {
+		if (oldValue === newValue) return;
 
-		const toAdd = subcategories.filter(
-			(subcategory) => !currCategory?.children.find((child) => child.id == subcategory.id)
-		);
-		const toRemove = currCategory?.children.filter(
-			(child) => !subcategories.find((subcategory) => subcategory.id == child.id)
-		);
-		const toUpdate = subcategories.filter((subcategory) => {
-			const currSubcategory = currCategory?.children.find((child) => child.id == subcategory.id);
-
-			runeDebug('=== UPDATE: ', { currSubcategory, subcategory });
-
-			return currSubcategory && JSON.stringify(currSubcategory) !== JSON.stringify(subcategory);
-		});
-
-		console.log('=== TO ADD: ', toAdd);
-		console.log('=== TO REMOVE: ', toRemove);
-		console.log('=== TO UPDATE: ', toUpdate);
-
-		openSubcategories = false;
-
-		storeCategory.update(currCategory!);
+		storeCategory.fieldUpdate(row.id, field, newValue);
 	};
-
-	onMount(() => {
-		const roots = storeCategory.categories.filter((category) => category.id_parent == '');
-
-		data.push(
-			...roots.map((category: CategoryTreeItem) => ({
-				id: category.id,
-				title: category.title,
-				slug: category.slug,
-				description: category.description,
-				visible: category.visible,
-				children: category.children,
-				modules: category.modules
-			}))
-		);
-
-		isReady = true;
-	});
 </script>
 
 <div class="cat-admin">
-	{#if !isReady}
-		<p>Loading...</p>
-	{:else}
-		<DataGrid {fields} {data} {buttons} />
-	{/if}
+	<DataGrid {fields} {data} {buttons} {oncelledit} />
 </div>
 
 {#if openSubcategories && currCategory}
@@ -161,7 +136,7 @@
 		onclose={() => (openSubcategories = false)}
 		oncancel={() => (openSubcategories = false)}
 	>
-		<SubCategoryManager id_category={currCategory?.id} onsave={onsave_subcategories} />
+		<CategoryAdmin categories={storeCategory.getByParent(currCategory)} />
 	</Modal>
 {/if}
 
