@@ -64,7 +64,7 @@ export const storeCategory: CategoryStore = $state( {
 		res.map( ( cat: CategoryTreeItem ) => {
 			if ( !cat.id_parent ) return;
 
-			const parent = storeCategory.categories.filter( ( c ) => c.id === cat.id_parent )[ 0 ];
+			const parent = storeCategory.get( cat.id_parent );
 			if ( !parent ) return;
 
 			if ( !parent.children ) parent.children = [];
