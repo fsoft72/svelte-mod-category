@@ -1,10 +1,11 @@
 <script lang="ts">
 	import DataGrid, {
+		type DataGridAction,
 		type DataGridButton,
 		type DataGridField,
 		type DataGridRow
 	} from '$liwe3/components/DataGrid.svelte';
-	import { Plus } from 'svelte-hero-icons';
+	import { Plus, Trash } from 'svelte-hero-icons';
 	import { storeCategory } from '../store.svelte';
 	import type { CategoryTreeItem } from '../types';
 	import Modal from '$liwe3/components/Modal.svelte';
@@ -12,10 +13,10 @@
 	import { runeDebug } from '$liwe3/utils/runes.svelte';
 
 	interface Props {
-		categories?: CategoryTreeItem[];
+		id_category?: string;
 	}
 
-	let { categories }: Props = $props();
+	let { id_category }: Props = $props();
 
 	const fields: DataGridField[] = [
 		{
@@ -105,14 +106,35 @@
 			icon: Plus,
 			mode: 'success',
 			onclick: () => {
-				console.log('Add');
+				const it = storeCategory.create(
+					id_category ? 'New Subcategory' : 'New Category',
+					id_category
+				);
+				storeCategory.add(it);
 			}
 		}
 	];
 
-	const data: DataGridRow[] = $state(categories ? categories : []);
+	const actions: DataGridAction[] = [
+		{
+			label: 'Delete',
+			icon: Trash,
+			mode: 'danger',
+			onclick: async (row: DataGridRow) => {
+				await storeCategory.del(row as CategoryTreeItem);
+				data = storeCategory.getByParent(id_category);
+				console.log('=== DATA: ', data.length);
+			}
+		}
+	];
+
+	let data: DataGridRow[] = $state(storeCategory.getByParent(id_category));
 	let currCategory: string = $state('');
 	let openSubcategories = $state(false);
+
+	$effect(() => {
+		console.log('=== NEW DATA: ', data);
+	});
 
 	const manageSubcategories = (row: DataGridRow) => {
 		currCategory = row.id;
@@ -127,7 +149,7 @@
 </script>
 
 <div class="cat-admin">
-	<DataGrid {fields} {data} {buttons} {oncelledit} />
+	<DataGrid {fields} {data} {buttons} {actions} {oncelledit} />
 </div>
 
 {#if openSubcategories && currCategory}
@@ -138,7 +160,7 @@
 		onclose={() => (openSubcategories = false)}
 		oncancel={() => (openSubcategories = false)}
 	>
-		<CategoryAdmin categories={storeCategory.getByParent(currCategory)} />
+		<CategoryAdmin id_category={currCategory} />
 	</Modal>
 {/if}
 
