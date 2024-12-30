@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { mkid } from '$liwe3/utils/utils';
 import { category_admin_add, category_admin_del, category_admin_list, category_admin_update } from './actions';
 import type { CategoryTreeItem } from './types';
 
 interface CategoryStore {
 	categories: CategoryTreeItem[];
 
+	create ( title: string, id_parent?: string, slug?: string, description?: string, modules?: string[], top?: boolean, visible?: boolean, image?: string ): CategoryTreeItem;
 	get ( id: string ): CategoryTreeItem | undefined;
 	load ( force?: boolean ): Promise<any>;
 	adminLoad ( force?: boolean ): Promise<any>;
@@ -21,6 +23,27 @@ interface CategoryStore {
 export const storeCategory: CategoryStore = $state( {
 	categories: [],
 
+	create ( title: string, id_parent?: string, slug?: string, description?: string, modules?: string[], top?: boolean, visible?: boolean, image?: string ): CategoryTreeItem {
+		const id = mkid( 'cat' );
+
+		if ( !slug ) slug = new Date().getTime().toString( 32 );
+
+		return {
+			id,
+			title,
+			id_parent: id_parent ?? '',
+			slug,
+			description: description ?? '',
+			modules: modules ?? [],
+			top: top ?? false,
+			visible: visible ?? true,
+			image: image ?? '',
+			children: [],
+			id_owner: '',
+			is_folder: false,
+		};
+	},
+
 	get ( id: string ): CategoryTreeItem | undefined {
 		const res = storeCategory.categories.filter( ( cat ) => cat.id === id );
 		if ( res.length ) return res[ 0 ];
@@ -32,19 +55,6 @@ export const storeCategory: CategoryStore = $state( {
 		if ( !force && storeCategory.categories.length ) return {};
 
 		storeCategory.categories.length = 0;
-		// if ( res.error ) return res;
-
-		/*
-		res.map( ( cat: CategoryTreeItem ) => {
-			storeCategory.categories.push( cat );
-
-			if ( cat.children ) {
-				cat.children.map( ( child: CategoryTreeItem ) => {
-					storeCategory.categoriesMap[ child.id ] = child;
-				} );
-			}
-		} );
-		*/
 
 		return {};
 	},
@@ -105,9 +115,14 @@ export const storeCategory: CategoryStore = $state( {
 
 	async del ( item: CategoryTreeItem, skip_save = false ) {
 		if ( !skip_save ) category_admin_del( item.id );
-		const pos = storeCategory.categories.findIndex( ( cat ) => cat.id === item.id );
-		if ( pos != -1 ) {
-			storeCategory.categories.splice( pos, 1 );
+
+		if ( item.id_parent ) {
+			const parent = storeCategory.get( item.id_parent );
+			if ( !parent ) return;
+
+			parent.children = parent.children.filter( ( cat ) => cat.id !== item.id );
+		} else {
+			storeCategory.categories = storeCategory.categories.filter( ( cat ) => cat.id !== item.id );
 		}
 	},
 
