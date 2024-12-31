@@ -6,11 +6,10 @@
 		type DataGridRow
 	} from '$liwe3/components/DataGrid.svelte';
 	import { Plus, Trash } from 'svelte-hero-icons';
-	import { storeCategory } from '../store.svelte';
+	import storeCategory from '../store.svelte';
 	import type { CategoryTreeItem } from '../types';
 	import Modal from '$liwe3/components/Modal.svelte';
 	import CategoryAdmin from './CategoryAdmin.svelte';
-	import { runeDebug } from '$liwe3/utils/runes.svelte';
 
 	interface Props {
 		id_category?: string;
@@ -84,7 +83,6 @@
 				manageSubcategories(row);
 			},
 			render: (field: CategoryTreeItem[], row: DataGridRow) => {
-				runeDebug('=== ROW: ', row);
 				return field?.length ?? 0;
 			}
 		},
@@ -105,12 +103,12 @@
 			label: 'Add',
 			icon: Plus,
 			mode: 'success',
-			onclick: () => {
+			onclick: async () => {
 				const it = storeCategory.create(
 					id_category ? 'New Subcategory' : 'New Category',
 					id_category
 				);
-				storeCategory.add(it);
+				await storeCategory.add(it);
 			}
 		}
 	];
@@ -121,35 +119,37 @@
 			icon: Trash,
 			mode: 'danger',
 			onclick: async (row: DataGridRow) => {
-				await storeCategory.del(row as CategoryTreeItem);
-				data = storeCategory.getByParent(id_category);
-				console.log('=== DATA: ', data.length);
+				await storeCategory.del(row.id);
+				// data = storeCategory.getByParent(id_category);
+				// console.log('=== DATA: ', data.length);
 			}
 		}
 	];
 
-	let data: DataGridRow[] = $state(storeCategory.getByParent(id_category));
+	// let data: DataGridRow[] = storeCategory.getByParent(id_category);
 	let currCategory: string = $state('');
 	let openSubcategories = $state(false);
-
-	$effect(() => {
-		console.log('=== NEW DATA: ', data);
-	});
 
 	const manageSubcategories = (row: DataGridRow) => {
 		currCategory = row.id;
 		openSubcategories = true;
 	};
 
-	const oncelledit = (row: DataGridRow, field: string, oldValue: any, newValue: any) => {
+	const oncelledit = async (row: DataGridRow, field: string, oldValue: any, newValue: any) => {
 		if (oldValue === newValue) return;
 
-		storeCategory.fieldUpdate(row.id, field, newValue);
+		await storeCategory.update(row.id, { [field]: newValue });
 	};
 </script>
 
 <div class="cat-admin">
-	<DataGrid {fields} {data} {buttons} {actions} {oncelledit} />
+	<DataGrid
+		{fields}
+		data={storeCategory.getByParent(id_category)}
+		{buttons}
+		{actions}
+		{oncelledit}
+	/>
 </div>
 
 {#if openSubcategories && currCategory}

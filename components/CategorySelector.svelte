@@ -1,7 +1,7 @@
 <script lang="ts">
 	import SelectTree from '$liwe3/components/SelectTree.svelte';
 	import type { FormField } from '$liwe3/components/FormCreator.svelte';
-	import { storeCategory } from '../store.svelte';
+	import storeCategory from '../store.svelte';
 	import { onMount } from 'svelte';
 
 	interface Props {
@@ -25,13 +25,13 @@
 		onchange(name, value, field);
 	};
 
-	onMount( async () => {
-		await storeCategory.load();
+	onMount(async () => {
+		// await storeCategory.load();
 		isReady = true;
 	});
-
 </script>
-{#if (isReady)}
+
+{#if isReady}
 	<SelectTree tree={storeCategory.tree()} {value} onchange={onSelect} />
 {:else}
 	<div>Loading...</div>
