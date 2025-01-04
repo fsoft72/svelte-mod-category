@@ -1,3 +1,4 @@
+import type { TreeItem } from '$liwe3/utils/tree';
 import { category_admin_add, category_admin_del, category_admin_list, category_admin_update } from './actions';
 
 // categoryStore.svelte.ts
@@ -188,6 +189,39 @@ const store = {
 		} );
 
 	},
+
+	// Returns categories as label / value pairs for use in a select dropdown
+	// for sub categories, it adds some padding to the label to show hierarchy
+	list () {
+		const list = [] as { label: string, value: string; }[];
+
+		const traverse = ( cats: CategoryTreeItem[], padding = '' ) => {
+			cats.map( cat => {
+				list.push( { label: padding + cat.title, value: cat.id } );
+				if ( cat.children ) traverse( cat.children, padding + '— ' );
+			} );
+		};
+
+		traverse( items.filter( c => !c.id_parent ) );
+
+		return list;
+	},
+
+	// returns a tree structure as in TreeItem
+	tree () {
+		const traverse = ( cats: CategoryTreeItem[] ): TreeItem[] =>
+			cats.map( cat => {
+				const item: TreeItem = {
+					id: cat.id,
+					name: cat.title,
+					children: cat.children ? traverse( cat.children ) : [],
+				};
+
+				return item;
+			} );
+
+		return { children: traverse( items.filter( c => !c.id_parent ) ) };
+	}
 
 };
 
