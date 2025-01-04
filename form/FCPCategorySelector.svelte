@@ -4,16 +4,19 @@
 	import { has_perm } from '$liwe3/utils/utils';
 	import Button from '$liwe3/components/Button.svelte';
 	import Modal from '$liwe3/components/Modal.svelte';
-	import CategoryManager from '../components/CategoryManager.svelte';
+	import CategoryAdmin from '../components/CategoryAdmin.svelte';
+	import type { FormField } from '$liwe3/components/FormCreator.svelte';
 
 	interface Props {
 		name: string;
 		value?: string;
+		_v: any;
+		field: FormField;
 
 		onchange?: (name: string, value: string) => void;
 	}
 
-	let { name, value = '', onchange }: Props = $props();
+	let { name, value = '', onchange, _v, field }: Props = $props();
 
 	let showEditCategs = $state(false);
 	let count = $state(0);
@@ -29,7 +32,7 @@
 
 <div class="container">
 	{#key count}
-		<CategorySelector {value} onchange={onChange} />
+		<CategorySelector {name} {value} {_v} {field} onchange={onChange} />
 	{/key}
 	{#if has_perm(storeUser, 'category.editor')}
 		<Button size="xs" variant="outline" mode="success" onclick={openEditCategs}>Edit</Button>
@@ -48,7 +51,7 @@
 			count++;
 		}}
 	>
-		<CategoryManager />
+		<CategoryAdmin />
 	</Modal>
 {/if}
 
