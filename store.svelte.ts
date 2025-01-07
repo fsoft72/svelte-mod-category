@@ -17,10 +17,11 @@ interface CategoryTreeItem {
 	modules?: string[];
 }
 
-let items = $state<CategoryTreeItem[]>( [] );
-
 const sortByTitle = ( items: CategoryTreeItem[] ): CategoryTreeItem[] =>
 	[ ...items ].sort( ( a, b ) => a.title.localeCompare( b.title ) );
+
+let items = $state<CategoryTreeItem[]>( [] );
+const sortedItems = $derived.by( () => sortByTitle( items ) );
 
 const store = {
 	create ( title: string, id_parent?: string, slug?: string, description?: string, modules?: string[], top?: boolean, visible?: boolean, image?: string ) {
@@ -164,8 +165,8 @@ const store = {
 		return sortByTitle( parent?.children ?? [] );
 	},
 
-	get all () { return sortByTitle( items ); },
-	get top () { return sortByTitle( items.filter( c => c.top ) ); },
+	get all () { return sortedItems; },
+	get top () { return sortedItems.filter( c => c.top ); },
 
 	async adminLoad ( force = false ) {
 		if ( !force && items.length ) return {};
@@ -188,6 +189,7 @@ const store = {
 
 		} );
 
+		return sortedItems;
 	},
 
 	// Returns categories as label / value pairs for use in a select dropdown
