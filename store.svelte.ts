@@ -1,5 +1,5 @@
 import type { TreeItem } from '$liwe3/utils/tree';
-import { category_admin_add, category_admin_del, category_admin_list, category_admin_update } from './actions';
+import { category_admin_add, category_admin_del, category_admin_list, category_admin_update, category_list } from './actions';
 
 // categoryStore.svelte.ts
 interface CategoryTreeItem {
@@ -174,6 +174,28 @@ const store = {
 		// items = [];
 
 		const res = await category_admin_list();
+		if ( res.error ) return res;
+
+		// first add top-level categories
+		res.map( ( cat: CategoryTreeItem ) => {
+			if ( !cat.id_parent ) store.add( cat, true );
+		} );
+
+		// then add children
+		res.map( ( cat: CategoryTreeItem ) => {
+			if ( !cat.id_parent ) return;
+
+			store.add( cat, true );
+
+		} );
+
+		return sortedItems;
+	},
+
+	async load ( force: boolean = false ) {
+		if ( !force && items.length ) return {};
+
+		const res = await category_list();
 		if ( res.error ) return res;
 
 		// first add top-level categories
