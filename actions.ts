@@ -43,7 +43,7 @@ export const category_admin_add = async ( title: string, slug: string, id_parent
 
 	/*=== f2c_end category_admin_add ===*/
 
-	return res.category;
+	return res.data;
 };
 
 /**
@@ -82,7 +82,7 @@ export const category_admin_update = async ( id: string, id_parent?: string, tit
 
 	/*=== f2c_end category_admin_update ===*/
 
-	return res.category;
+	return res.data;
 };
 
 /**
@@ -104,7 +104,7 @@ export const category_admin_fields = async ( id: string, data: any, _options?: L
 
 	/*=== f2c_end category_admin_fields ===*/
 
-	return res.category;
+	return res.data;
 };
 
 /**
@@ -125,7 +125,7 @@ export const category_admin_list = async ( parent_only?: boolean, _options?: LiW
 
 	/*=== f2c_end category_admin_list ===*/
 
-	return res.categories;
+	return res.data;
 };
 
 /**
@@ -145,7 +145,7 @@ export const category_admin_del = async ( id: string, _options?: LiWEFetcherOpti
 
 	/*=== f2c_end category_admin_del ===*/
 
-	return res.id;
+	return res.data;
 };
 
 /**
@@ -167,7 +167,7 @@ export const category_admin_module_add = async ( id: string, module: string, _op
 
 	/*=== f2c_end category_admin_module_add ===*/
 
-	return res.category;
+	return res.data;
 };
 
 /**
@@ -189,7 +189,7 @@ export const category_admin_module_del = async ( id: string, module: string, _op
 
 	/*=== f2c_end category_admin_module_del ===*/
 
-	return res.category;
+	return res.data;
 };
 
 /**
@@ -210,7 +210,7 @@ export const category_list = async ( id_category?: string, module?: string, _opt
 
 	/*=== f2c_end category_list ===*/
 
-	return res.tree;
+	return res.data;
 };
 
 /**
@@ -231,7 +231,7 @@ export const category_top_list = async ( module?: string, limit?: number, _optio
 
 	/*=== f2c_end category_top_list ===*/
 
-	return res.categs;
+	return res.data;
 };
 
 /**
@@ -250,5 +250,5 @@ export const category_slug_valid = async ( slug: string, id?: string, _options?:
 
 	/*=== f2c_end category_slug_valid ===*/
 
-	return res.ok;
+	return res.data;
 };
